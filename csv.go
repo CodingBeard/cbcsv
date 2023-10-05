@@ -42,6 +42,7 @@ type csvOptions struct {
 
 	missingHeader bool
 	skipRows      int
+	skipErrors    bool
 }
 
 type CsvOption func(o *csvOptions)
@@ -99,6 +100,12 @@ func WithSkipRows(rows int) CsvOption {
 func WithMissingHeader() CsvOption {
 	return func(o *csvOptions) {
 		o.missingHeader = true
+	}
+}
+
+func WithSkipErrors() CsvOption {
+	return func(o *csvOptions) {
+		o.skipErrors = true
 	}
 }
 
@@ -220,6 +227,9 @@ func (c *Csv[T]) Range(fn func(offset int, item T) error, wg ConcurrentWaitGroup
 			if e != nil {
 				if errors.Is(e, io.EOF) {
 					break
+				}
+				if c.options.skipErrors {
+					continue
 				}
 				return e
 			}
